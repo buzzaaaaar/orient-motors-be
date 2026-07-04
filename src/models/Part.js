@@ -6,7 +6,7 @@ const oemNumberSchema = new mongoose.Schema({
 }, { _id: false });
 
 const partSchema = new mongoose.Schema({
-  originalPartNumber: { type: String, required: true, unique: true, trim: true, index: true },
+  originalPartNumber: { type: String, unique: true, sparse: true, trim: true, index: true },
   partName: { type: String, required: true, trim: true, index: true },
   category: { type: String, trim: true, index: true },
   brand: { type: String, trim: true },

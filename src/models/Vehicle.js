@@ -10,6 +10,7 @@ const vehicleSchema = new mongoose.Schema({
   chassisCode: { type: String, trim: true },
   bodyType: { type: String, trim: true },
   transmission: { type: String, enum: ['manual', 'auto', 'both'] },
+  fuelType: { type: String, enum: ['petrol', 'diesel', 'hybrid', 'electric', 'other'] },
   isActive: { type: Boolean, default: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -4,7 +4,7 @@ const Vehicle = require('../models/Vehicle');
 
 exports.addCompatibility = async (req, res) => {
   try {
-    const { partId, vehicleId, notes } = req.body;
+    const { partId, vehicleId, notes, fuelTypes, transmissions } = req.body;
 
     if (!partId || !vehicleId) {
       return res.status(400).json({ message: 'partId and vehicleId are required' });
@@ -25,6 +25,8 @@ exports.addCompatibility = async (req, res) => {
       partId,
       vehicleId,
       notes,
+      fuelTypes: fuelTypes && fuelTypes.length ? fuelTypes : ['petrol', 'diesel', 'hybrid'],
+      transmissions: transmissions && transmissions.length ? transmissions : ['manual', 'auto'],
       createdBy: req.user._id,
     });
 

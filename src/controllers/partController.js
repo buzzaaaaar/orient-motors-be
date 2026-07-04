@@ -75,17 +75,24 @@ exports.createPart = async (req, res) => {
   try {
     const { originalPartNumber, partName, oemNumbers, category, brand, description, status, supersededBy, imageUrl } = req.body;
 
-    if (!originalPartNumber || !partName) {
-      return res.status(400).json({ message: 'originalPartNumber and partName are required' });
+    if (!partName) {
+      return res.status(400).json({ message: 'partName is required' });
     }
 
-    const existing = await Part.findOne({ originalPartNumber });
-    if (existing) {
-      return res.status(409).json({ message: 'Part with this original number already exists' });
+    let cleanedPartNumber = originalPartNumber;
+    if (!cleanedPartNumber || !cleanedPartNumber.trim()) {
+      cleanedPartNumber = undefined;
+    }
+
+    if (cleanedPartNumber) {
+      const existing = await Part.findOne({ originalPartNumber: cleanedPartNumber });
+      if (existing) {
+        return res.status(409).json({ message: 'Part with this original number already exists' });
+      }
     }
 
     const part = await Part.create({
-      originalPartNumber,
+      originalPartNumber: cleanedPartNumber,
       partName,
       oemNumbers: oemNumbers || [],
       category,
@@ -111,10 +118,27 @@ exports.updatePart = async (req, res) => {
       return res.status(404).json({ message: 'Part not found' });
     }
 
+    if (req.body.originalPartNumber !== undefined) {
+      let cleaned = req.body.originalPartNumber;
+      if (!cleaned || !cleaned.trim()) {
+        cleaned = undefined;
+      }
+      if (cleaned && cleaned !== part.originalPartNumber) {
+        const existing = await Part.findOne({ originalPartNumber: cleaned });
+        if (existing) {
+          return res.status(409).json({ message: 'Part with this original number already exists' });
+        }
+      }
+    }
+
     const allowed = ['originalPartNumber', 'partName', 'oemNumbers', 'category', 'brand', 'description', 'status', 'supersededBy', 'imageUrl'];
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
-        part[key] = req.body[key];
+        if (key === 'originalPartNumber' && (!req.body[key] || !req.body[key].trim())) {
+          part[key] = undefined;
+        } else {
+          part[key] = req.body[key];
+        }
       }
     }
     part.updatedBy = req.user._id;
@@ -181,7 +205,7 @@ exports.suggestParts = async (req, res) => {
     const suggestions = parts.map((p) => ({
       _id: p._id,
       partName: p.partName,
-      originalPartNumber: p.originalPartNumber,
+      originalPartNumber: p.originalPartNumber || '',
       oemNumber: p.oemNumbers?.[0]?.oemNumber || null,
       category: p.category || null,
       status: p.status,

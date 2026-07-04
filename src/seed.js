@@ -9,16 +9,16 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/orient
 
 /* ─── Vehicles ────────────────────────────────────────────────────────────── */
 const VEHICLES = [
-  { make: 'Toyota', model: 'Corolla',   trim: 'GLi',   yearFrom: 2015, yearTo: 2019, engineCode: '2ZR-FE',  chassisCode: 'ZRE172', bodyType: 'Sedan',  transmission: 'auto'   },
-  { make: 'Toyota', model: 'Corolla',   trim: 'Altis', yearFrom: 2019, yearTo: 2023, engineCode: 'M20A-FKS',chassisCode: 'ZWE211', bodyType: 'Sedan',  transmission: 'auto'   },
-  { make: 'Toyota', model: 'Hilux',     trim: 'Revo',  yearFrom: 2016, yearTo: 2022, engineCode: '2GD-FTV', chassisCode: 'GUN125', bodyType: 'Pickup', transmission: 'manual' },
-  { make: 'Toyota', model: 'Land Cruiser', trim: 'LC200', yearFrom: 2015, yearTo: 2021, engineCode: '1VD-FTV', chassisCode: 'UZJ200', bodyType: 'SUV', transmission: 'auto' },
-  { make: 'Honda',  model: 'Civic',     trim: 'VTi',   yearFrom: 2016, yearTo: 2021, engineCode: 'L15B7',   chassisCode: 'FC1',    bodyType: 'Sedan',  transmission: 'auto'   },
-  { make: 'Honda',  model: 'City',      trim: 'Aspire',yearFrom: 2017, yearTo: 2022, engineCode: 'L15Z1',   chassisCode: 'GM6',    bodyType: 'Sedan',  transmission: 'auto'   },
-  { make: 'Honda',  model: 'HR-V',      trim: 'EX',    yearFrom: 2015, yearTo: 2022, engineCode: 'R20A2',   chassisCode: 'RU1',    bodyType: 'SUV',    transmission: 'auto'   },
-  { make: 'Suzuki', model: 'Swift',     trim: 'DLX',   yearFrom: 2018, yearTo: 2023, engineCode: 'K12C',    chassisCode: 'ZC33S',  bodyType: 'Hatch',  transmission: 'manual' },
-  { make: 'Suzuki', model: 'Cultus',    trim: 'VXR',   yearFrom: 2017, yearTo: 2023, engineCode: 'K10B',    chassisCode: 'GC612',  bodyType: 'Hatch',  transmission: 'manual' },
-  { make: 'Daihatsu',model:'Mira',      trim: 'X',     yearFrom: 2014, yearTo: 2020, engineCode: 'KF-VE',   chassisCode: 'L275S',  bodyType: 'Hatch',  transmission: 'auto'   },
+  { make: 'Toyota', model: 'Corolla',   trim: 'GLi',   yearFrom: 2015, yearTo: 2019, engineCode: '2ZR-FE',  chassisCode: 'ZRE172', bodyType: 'Sedan',  transmission: 'auto',   fuelType: 'petrol'   },
+  { make: 'Toyota', model: 'Corolla',   trim: 'Altis', yearFrom: 2019, yearTo: 2023, engineCode: 'M20A-FKS',chassisCode: 'ZWE211', bodyType: 'Sedan',  transmission: 'auto',   fuelType: 'hybrid'   },
+  { make: 'Toyota', model: 'Hilux',     trim: 'Revo',  yearFrom: 2016, yearTo: 2022, engineCode: '2GD-FTV', chassisCode: 'GUN125', bodyType: 'Pickup', transmission: 'manual', fuelType: 'diesel'   },
+  { make: 'Toyota', model: 'Land Cruiser', trim: 'LC200', yearFrom: 2015, yearTo: 2021, engineCode: '1VD-FTV', chassisCode: 'UZJ200', bodyType: 'SUV', transmission: 'auto',   fuelType: 'diesel'   },
+  { make: 'Honda',  model: 'Civic',     trim: 'VTi',   yearFrom: 2016, yearTo: 2021, engineCode: 'L15B7',   chassisCode: 'FC1',    bodyType: 'Sedan',  transmission: 'auto',   fuelType: 'petrol'   },
+  { make: 'Honda',  model: 'City',      trim: 'Aspire',yearFrom: 2017, yearTo: 2022, engineCode: 'L15Z1',   chassisCode: 'GM6',    bodyType: 'Sedan',  transmission: 'auto',   fuelType: 'petrol'   },
+  { make: 'Honda',  model: 'HR-V',      trim: 'EX',    yearFrom: 2015, yearTo: 2022, engineCode: 'R20A2',   chassisCode: 'RU1',    bodyType: 'SUV',    transmission: 'auto',   fuelType: 'hybrid'   },
+  { make: 'Suzuki', model: 'Swift',     trim: 'DLX',   yearFrom: 2018, yearTo: 2023, engineCode: 'K12C',    chassisCode: 'ZC33S',  bodyType: 'Hatch',  transmission: 'manual', fuelType: 'petrol'   },
+  { make: 'Suzuki', model: 'Cultus',    trim: 'VXR',   yearFrom: 2017, yearTo: 2023, engineCode: 'K10B',    chassisCode: 'GC612',  bodyType: 'Hatch',  transmission: 'manual', fuelType: 'petrol'   },
+  { make: 'Daihatsu',model:'Mira',      trim: 'X',     yearFrom: 2014, yearTo: 2020, engineCode: 'KF-VE',   chassisCode: 'L275S',  bodyType: 'Hatch',  transmission: 'auto',   fuelType: 'petrol'   },
 ];
 
 /* ─── Parts ───────────────────────────────────────────────────────────────── */
@@ -235,6 +235,11 @@ const seed = async () => {
   await mongoose.connect(MONGODB_URI);
   console.log('Connected to MongoDB');
 
+  await Vehicle.deleteMany({});
+  await Part.deleteMany({});
+  await PartVehicleCompatibility.deleteMany({});
+  console.log('✔ Cleared existing vehicles, parts, and compatibilities.');
+
   /* 1 — Admin user */
   let admin = await User.findOne({ role: 'admin' });
   if (!admin) {
@@ -302,6 +307,8 @@ const seed = async () => {
     await PartVehicleCompatibility.create({
       partId:    part._id,
       vehicleId: vehicle._id,
+      fuelTypes: ['petrol', 'diesel', 'hybrid'],
+      transmissions: ['manual', 'auto'],
       createdBy: admin._id,
     });
     created++;

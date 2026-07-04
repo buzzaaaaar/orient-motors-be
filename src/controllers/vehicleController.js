@@ -4,17 +4,35 @@ const escapeRegExp = require('../utils/escapeRegExp');
 
 exports.searchVehicles = async (req, res) => {
   try {
-    const { make, model, year, trim, engineCode, page = 1, limit = 50 } = req.query;
+    const { q, make, model, year, trim, engineCode, page = 1, limit = 50 } = req.query;
     const filter = { isActive: true };
 
-    if (make) filter.make = { $regex: escapeRegExp(make), $options: 'i' };
-    if (model) filter.model = { $regex: escapeRegExp(model), $options: 'i' };
-    if (trim) filter.trim = { $regex: escapeRegExp(trim), $options: 'i' };
-    if (engineCode) filter.engineCode = { $regex: escapeRegExp(engineCode), $options: 'i' };
-    if (year) {
-      const y = parseInt(year);
-      filter.yearFrom = { $lte: y };
-      filter.yearTo = { $gte: y };
+    if (q) {
+      const escaped = escapeRegExp(q);
+      const yearVal = parseInt(q, 10);
+      const isYear = /^\d{4}$/.test(q.trim()) && yearVal >= 1900 && yearVal <= 2100;
+
+      const orConditions = [
+        { make: { $regex: escaped, $options: 'i' } },
+        { model: { $regex: escaped, $options: 'i' } },
+        { trim: { $regex: escaped, $options: 'i' } },
+        { engineCode: { $regex: escaped, $options: 'i' } },
+        { chassisCode: { $regex: escaped, $options: 'i' } },
+      ];
+      if (isYear) {
+        orConditions.push({ yearFrom: { $lte: yearVal }, yearTo: { $gte: yearVal } });
+      }
+      filter.$or = orConditions;
+    } else {
+      if (make) filter.make = { $regex: escapeRegExp(make), $options: 'i' };
+      if (model) filter.model = { $regex: escapeRegExp(model), $options: 'i' };
+      if (trim) filter.trim = { $regex: escapeRegExp(trim), $options: 'i' };
+      if (engineCode) filter.engineCode = { $regex: escapeRegExp(engineCode), $options: 'i' };
+      if (year) {
+        const y = parseInt(year);
+        filter.yearFrom = { $lte: y };
+        filter.yearTo = { $gte: y };
+      }
     }
 
     const pageNum = Math.max(1, parseInt(page));
@@ -57,7 +75,7 @@ exports.getVehicle = async (req, res) => {
 
 exports.createVehicle = async (req, res) => {
   try {
-    const { make, model, trim, yearFrom, yearTo, engineCode, chassisCode, bodyType, transmission } = req.body;
+    const { make, model, trim, yearFrom, yearTo, engineCode, chassisCode, bodyType, transmission, fuelType } = req.body;
 
     if (!make || !model || yearFrom === undefined || yearTo === undefined) {
       return res.status(400).json({ message: 'make, model, yearFrom, yearTo are required' });
@@ -68,7 +86,7 @@ exports.createVehicle = async (req, res) => {
     }
 
     const vehicle = await Vehicle.create({
-      make, model, trim, yearFrom, yearTo, engineCode, chassisCode, bodyType, transmission,
+      make, model, trim, yearFrom, yearTo, engineCode, chassisCode, bodyType, transmission, fuelType,
       createdBy: req.user._id,
       updatedBy: req.user._id,
     });
@@ -86,7 +104,7 @@ exports.updateVehicle = async (req, res) => {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
 
-    const allowed = ['make', 'model', 'trim', 'yearFrom', 'yearTo', 'engineCode', 'chassisCode', 'bodyType', 'transmission'];
+    const allowed = ['make', 'model', 'trim', 'yearFrom', 'yearTo', 'engineCode', 'chassisCode', 'bodyType', 'transmission', 'fuelType'];
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
         vehicle[key] = req.body[key];
@@ -159,7 +177,7 @@ exports.suggestVehicles = async (req, res) => {
     };
 
     const vehicles = await Vehicle.find(filter)
-      .select('make model yearFrom yearTo trim engineCode chassisCode')
+      .select('make model yearFrom yearTo trim engineCode chassisCode fuelType transmission')
       .limit(10)
       .sort({ make: 1, model: 1, yearFrom: 1 });
 
@@ -174,9 +192,25 @@ exports.suggestVehicles = async (req, res) => {
       trim: v.trim,
       engineCode: v.engineCode || null,
       chassisCode: v.chassisCode || null,
+      fuelType: v.fuelType || null,
+      transmission: v.transmission || null,
     }));
 
     res.json(suggestions);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getMakes = async (req, res) => {
+  try {
+    const { q } = req.query;
+    let filter = { isActive: true };
+    if (q) {
+      filter.make = { $regex: escapeRegExp(q), $options: 'i' };
+    }
+    const makes = await Vehicle.distinct('make', filter);
+    res.json(makes.sort());
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
