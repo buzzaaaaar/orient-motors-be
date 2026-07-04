@@ -57,6 +57,7 @@ exports.searchVehicles = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error('Error in searchVehicles:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -69,6 +70,7 @@ exports.getVehicle = async (req, res) => {
     }
     res.json(vehicle);
   } catch (err) {
+    console.error('Error in getVehicle:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -93,6 +95,7 @@ exports.createVehicle = async (req, res) => {
 
     res.status(201).json(vehicle);
   } catch (err) {
+    console.error('Error in createVehicle:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -115,6 +118,7 @@ exports.updateVehicle = async (req, res) => {
     await vehicle.save();
     res.json(vehicle);
   } catch (err) {
+    console.error('Error in updateVehicle:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -131,6 +135,7 @@ exports.deleteVehicle = async (req, res) => {
     await vehicle.save();
     res.json({ message: 'Vehicle deactivated', id: vehicle._id });
   } catch (err) {
+    console.error('Error in deleteVehicle:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -145,6 +150,7 @@ exports.getVehicleParts = async (req, res) => {
     const valid = compatibilities.filter((c) => c.partId != null);
     res.json(valid);
   } catch (err) {
+    console.error('Error in getVehicleParts:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -198,6 +204,7 @@ exports.suggestVehicles = async (req, res) => {
 
     res.json(suggestions);
   } catch (err) {
+    console.error('Error in suggestVehicles:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -212,6 +219,7 @@ exports.getMakes = async (req, res) => {
     const makes = await Vehicle.distinct('make', filter);
     res.json(makes.sort());
   } catch (err) {
+    console.error('Error in getMakes:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

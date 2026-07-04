@@ -48,6 +48,7 @@ exports.searchParts = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error('Error in searchParts:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -67,6 +68,7 @@ exports.getPart = async (req, res) => {
 
     res.json({ ...part.toObject(), vehicles: compatibilities });
   } catch (err) {
+    console.error('Error in getPart:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -107,6 +109,7 @@ exports.createPart = async (req, res) => {
 
     res.status(201).json(part);
   } catch (err) {
+    console.error('Error in createPart:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -146,6 +149,7 @@ exports.updatePart = async (req, res) => {
     await part.save();
     res.json(part);
   } catch (err) {
+    console.error('Error in updatePart:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -161,6 +165,7 @@ exports.deletePart = async (req, res) => {
     await part.save();
     res.json({ message: 'Part soft-deleted', id: part._id });
   } catch (err) {
+    console.error('Error in deletePart:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -175,6 +180,7 @@ exports.getPartVehicles = async (req, res) => {
     const valid = compatibilities.filter((c) => c.vehicleId != null);
     res.json(valid);
   } catch (err) {
+    console.error('Error in getPartVehicles:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -213,6 +219,7 @@ exports.suggestParts = async (req, res) => {
 
     res.json(suggestions);
   } catch (err) {
+    console.error('Error in suggestParts:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
