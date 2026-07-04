@@ -1,2 +1,5 @@
 node_modules/
 .env
+seed.js
+check_live_db.js
+check_db.js
